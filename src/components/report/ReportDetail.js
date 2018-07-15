@@ -27,7 +27,9 @@ class ReportDetail extends React.Component {
       countSpeedLimits: null,
       distance: null,
       duration: null,
-      maxSpeed: null
+      maxSpeed: null,
+      countBreak: null,
+      alert: null,
     }
   }
 
@@ -71,6 +73,11 @@ class ReportDetail extends React.Component {
         if(child.key == 'alert'){
           this.setState({
             alert: child.val(),
+          })
+        }
+        if(child.key == 'countBreak'){
+          this.setState({
+            countBreak: child.val(),
           })
         }
 
@@ -151,6 +158,15 @@ class ReportDetail extends React.Component {
               </View>
               <View style = {{height: 30, alignSelf: 'center', margin: 5}}>
                 <Text>{this.state.alert} ครั้ง</Text>
+              </View>
+            </View>
+
+            <View style = {{flexDirection: 'row', alignItems: 'center'}}>
+              <View style = {{height: 30, alignSelf: 'center', margin: 5}}>
+                <Text>จำนวนการเบรก</Text>
+              </View>
+              <View style = {{height: 30, alignSelf: 'center', margin: 5}}>
+                <Text>{this.state.countBreak} ครั้ง</Text>
               </View>
             </View>
 

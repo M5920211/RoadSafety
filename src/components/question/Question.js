@@ -250,11 +250,11 @@ export default class Question extends Component {
 
   componentDidMount(){
     const { currentUser } = firebase.auth();
-    const data = firebase.database().ref(`/users/${currentUser.uid}/history`);
+    const data = firebase.database().ref(`/users/${currentUser.uid}`);
     data.on('value', snapshot => {
-      snapshot.forEach((child) => {
-        console.log(child.key);
-        if(child.val().question == 'yes'){
+      let data = snapshot.val();
+      let items = Object.values(data);
+        if(items[0].question == 'yes'){
           const question = firebase.database().ref(`/users/${currentUser.uid}/question`);
           question.on('value', snapshot => {
             var items = null;
@@ -308,7 +308,6 @@ export default class Question extends Component {
         }else{
           this.setState({statusQuestionCheck: false, statusQuestion: false});
         }
-      });
     });
   }
 
@@ -566,10 +565,24 @@ export default class Question extends Component {
       Q3Accidents: value3,
       Q4RoadAccidents: selectedItems1+', '+selectedItems2+', '+selectedItems3,
     }).then(() => {
-      const keyHis = firebase.database().ref(`/users/${currentUser.uid}/history`);
-      keyHis.update({
-        question: 'yes',
-      })
+      const keyHis = firebase.database().ref(`/users/${currentUser.uid}`);
+      keyHis.on('value', snapshot => {
+              let data = snapshot.val();
+              let items = Object.values(data);
+              const history = firebase.database().ref(`/users/${currentUser.uid}/history`);
+              history.update({
+                email: items[0].email,
+                firstName: items[0].firstName,
+                lastName: items[0].lastName,
+                mobile: items[0].mobile,
+                question: 'yes',
+              }).then(() => {
+                  alert('บันทึกข้อมูลเรียบร้อย');
+                  Actions.refresh({
+                    status: 'save'
+                  })
+                });
+            })
     });
   }
 
@@ -582,26 +595,26 @@ export default class Question extends Component {
       Q2Carlnsurance: value2,
       Q3Accidents: value3,
     }).then(() => {
-      const keyHis = firebase.database().ref(`/users/${currentUser.uid}/history`);
+      const keyHis = firebase.database().ref(`/users/${currentUser.uid}`);
       keyHis.on('value', snapshot => {
-        snapshot.forEach((child) => {
-          const status = firebase.database().ref(`/users/${currentUser.uid}/history/${child.key}`);
-          status.set({
-            email: child.val().email ,
-            firstName: child.val().firstName,
-            lastName: child.val().lastName,
-            mobile: child.val().mobile,
-            question: 'yes',
+              let data = snapshot.val();
+              let items = Object.values(data);
+              console.log(items);
+              const history = firebase.database().ref(`/users/${currentUser.uid}/history`);
+              history.update({
+                email: items[0].email,
+                firstName: items[0].firstName,
+                lastName: items[0].lastName,
+                mobile: items[0].mobile,
+                question: 'yes',
+              }).then(() => {
+                  alert('บันทึกข้อมูลเรียบร้อย');
+                  Actions.refresh({
+                    status: 'save'
+                  })
+                });
+            })
           })
-            .then(() => {
-              alert('บันทึกข้อมูลเรียบร้อย');
-              Actions.refresh({
-                status: 'save'
-              })
-            });
-        });
-      });
-    });
   }
 
   render() {

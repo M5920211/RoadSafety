@@ -20,7 +20,7 @@ import RunInfo from './run-info';
 import RunInfoNumeric from './run-numeric';
 import firebase from 'firebase';
 import Sound from 'react-native-sound';
-import { Accelerometer } from "react-native-sensors";
+import { Accelerometer, Gyroscope  } from "react-native-sensors";
 import RNFetchBlob from 'react-native-fetch-blob';
 const { width, height } = Dimensions.get('window');
 let id = 0;
@@ -37,8 +37,7 @@ export default class TestDrive extends Component {
           this.distanceInfo.setState({ value: Number((distance/1000).toFixed(2))})
         }
         this.speedInfo.setState({value: Number((position.coords.speed*3.6).toFixed(2))});
-        console.log(Number.parseInt(position.coords.speed, 10)+' > '+Number.parseInt(this.props.maxSpeed, 10));
-        if(Number.parseInt(position.coords.speed, 10) >= Number.parseInt(this.props.maxSpeed, 10)){
+        if(Number.parseInt((position.coords.speed*3.6), 10) >= Number.parseInt(this.props.maxSpeed, 10)){
           this.setState({alert: alert + 1});
           this.playSound();
         }
@@ -49,6 +48,7 @@ export default class TestDrive extends Component {
               key: id++
             }
           ],
+          coordinate: position.coords,
           previousCoordinate: position.coords,
           distance,
           latitude: position.coords.latitude,
@@ -61,14 +61,6 @@ export default class TestDrive extends Component {
         });
       }, (error) => alert(JSON.stringify(error)), {enableHighAccuracy: false, timeout: 20000, maximumAge: 1000, distanceFilter:15});
 
-      new Accelerometer({
-        updateInterval: 400 // defaults to 100ms
-      }).then(observable => {
-          observable.subscribe(({x,y,z}) => this.setState({x,y,z}));
-      }).catch(error => {
-          console.log("The sensor is not available");
-      });
-
       this.state = {
         markers: [],
         watchID,
@@ -78,6 +70,7 @@ export default class TestDrive extends Component {
         car: null,
         dis: 0,
         alert: 0,
+        countBreak: 0,
         modalVisible: false,
         result: {
           carType: '-' ,
@@ -121,6 +114,7 @@ export default class TestDrive extends Component {
       var seconds = 0;
       var minute = 0;
       var time;
+      var newLocation = 0;
       this.setState({timeStart: 0, alert: 0});
       this._intervalTime = setInterval(() => {
         secondsElapsed = secondsElapsed + 1;
@@ -131,17 +125,29 @@ export default class TestDrive extends Component {
         this.setState({timeStart: minute==0? seconds/60 : minute+seconds/60 })
       }, 1000);
 
+      this.checkPositionChange = setInterval(() => {
+        console.log(newLocation);
+        console.log(this.state.coordinate);
+        if (newLocation != this.state.coordinate) {
+          newLocation = this.state.coordinate;
+        }else {
+          this.setState({
+            countBreak: this.state.countBreak + 1,
+          })
+          newLocation = 0;
+        }
+      }, 5000);
     }
 
     timeStop(){
       navigator.geolocation.clearWatch(this.watchID);
       clearInterval(this._intervalTime);
+      clearInterval(this.checkPositionChange);
     }
 
     avgData(){
-      console.log('avg');
       const { car, maxSpeed, dis, timeStart, alert } = this.state;
-      let avgSpeed = dis/(timeStart/60);
+      let avgSpeed = Number((dis/(timeStart/60)).toFixed(2));
       let countTrip
 
       const { currentUser } = firebase.auth();
@@ -154,11 +160,13 @@ export default class TestDrive extends Component {
             let totalDistance = 0;
             let totalDuration = 0;
             let alert = 0;
+            let countBreak = 0;
             for (var i = 0; i < items.length; i++) {
               avgTotalSpeed = avgTotalSpeed + items[i].avgSpeed;
               totalDistance = totalDistance + items[i].distance;
               totalDuration = totalDuration + items[i].duration;
               alert = alert + items[i].alert;
+              countBreak = countBreak + items[i].countBreak;
             }
 
             avgTotalSpeed = Number((avgTotalSpeed/items.length).toFixed(2));
@@ -173,75 +181,32 @@ export default class TestDrive extends Component {
               totalDuration: totalDuration,
               totalCountSpeedLimit: 0,
               countAlert: alert,
+              countBreak: countBreak,
             });
 
          });
-
-      {
-        /*
-        console.log(snapshot);
-        snapshot.forEach((child) => {
-          console.log(child.key);
-          const update = firebase.database().ref(`/users/${currentUser.uid}/totalTrip/${child.key}`);
-          console.log('i');
-          update.set({
-            countTrip: child.val().countTrip + 1,
-            avgTotalSpeed: (child.val().avgTotalSpeed + avgSpeed)/2,
-            totalDistance: child.val().totalDistance + dis,
-            totalDuration: child.val().totalDuration + Number((timeStart/60).toFixed(2)),
-            totalCountSpeedLimit: 0,
-          }).then(() => {});
-        });
-        */
-      };
     }
 
     playSound(){
-      console.log('sound');
       const mySound = new Sound('http://commondatastorage.googleapis.com/codeskulptor-assets/jump.ogg', Sound.MAIN_BUNDLE, (e) => {
-      if (e) {
-        console.log('error', e);
-      } else {
-        console.log('duration', mySound.getDuration());
-        mySound.play();
-        mySound.setSpeed(2);
-      }
-      console.log(mySound);
-    });
-    mySound.play();
-    console.log(mySound);
-
-    {/*  var whoosh = new Sound('Alarm_Clock.mp3', Sound.MAIN_BUNDLE, (error) => {
-       if (error) {
-         console.log('failed to load the sound', error);
-         return;
-       }
-       // loaded successfully
-       console.log('duration in seconds: ' + whoosh.getDuration() + 'number of channels: ' + whoosh.getNumberOfChannels());
+        if (e) {
+          console.log('error', e);
+        } else {
+          console.log('duration', mySound.getDuration());
+          mySound.play();
+          mySound.setSpeed(2);
+        }
       });
-      console.log(whoosh);
-      // Play the sound with an onEnd callback
-      whoosh.play((success) => {
-       if (success) {
-         console.log('successfully finished playing');
-       } else {
-         console.log('playback failed due to audio decoding errors');
-         // reset the player to its uninitialized state (android only)
-         // this is the only option to recover after an error occured and use the player again
-         whoosh.reset();
-       }
-     });  */}
-     }
+      mySound.play();
+    }
 
     componentDidMount() {
-      console.log(this.props.maxSpeed + ' '+ this.props.car);
       this.setState({maxSpeed: this.props.maxSpeed, car: this.props.car});
         setTimeout( () => this.setState({ hackHeight: height+1}), 500);
         setTimeout( () => this.setState({ hackHeight: height}), 1000);
 
         this.watchIdFirst = navigator.geolocation.getCurrentPosition(
           (position) => {
-            console.log(position);
             this.setState({
               region: {
                 latitude: position.coords.latitude,
@@ -283,7 +248,7 @@ export default class TestDrive extends Component {
     }
 
     saveData(){
-      const { car, maxSpeed, dis, timeStart, alert } = this.state;
+      const { car, maxSpeed, dis, timeStart, alert, countBreak } = this.state;
 
       const snapshot = this.map.takeSnapshot({
         width: 300,      // optional, when omitted the view-width is used
@@ -306,9 +271,8 @@ export default class TestDrive extends Component {
       }).catch((e) => {
         console.log(e.error);
       })
-      let avgSpeed = dis/(timeStart/60);
+      let avgSpeed = Number((dis/(timeStart/60)).toFixed(2));
       const { currentUser } = firebase.auth();
-      console.log(this.imagemap);
       // const imageTemp = firebase.storage().ref(`/user/${currentUser.uid}/maps`);
       //
       // imageTemp.putFile(image)
@@ -342,6 +306,7 @@ export default class TestDrive extends Component {
           countSpeedLimits: 0,
           maxSpeed: maxSpeed,
           alert: alert,
+          countBreak: countBreak,
         }
       })
       data.push().set({
@@ -353,8 +318,8 @@ export default class TestDrive extends Component {
         countSpeedLimits: 0,
         maxSpeed: maxSpeed,
         alert: alert,
+        countBreak: countBreak,
       }).then(() => {
-        console.log('alert');
         Alert.alert(
           'Save data success',
           '',
@@ -372,6 +337,7 @@ export default class TestDrive extends Component {
   }
 
   showData(car, avgSpeed, dis, timeStart, maxSpeed, alert){
+    console.log('show data');
     {/*let countTrip
     let avgTotalSpeed
     let totalDistance
@@ -392,7 +358,6 @@ export default class TestDrive extends Component {
       });
     });*/}
 
-    console.log(car+' '+avgSpeed+' '+dis+' '+timeStart+' '+maxSpeed);
     this.setModalVisible(true);
   }
 
@@ -465,7 +430,7 @@ export default class TestDrive extends Component {
           <View style ={{flexDirection: 'row', alignItems: 'center', justifyContent: 'center'}}>
           <View style = {{flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255, 255, 255, 0.75)'}}>
             <View style = {{height: 30, alignSelf: 'center', margin: 5}}>
-              <Text>latitude</Text>
+              <Text>Latitude</Text>
             </View>
             <View style = {{height: 30, alignSelf: 'center', margin: 5}}>
               <Text>{this.state.latitude}</Text>
@@ -474,7 +439,7 @@ export default class TestDrive extends Component {
 
           <View style = {{flexDirection: 'row', alignItems: 'center',backgroundColor: 'rgba(255, 255, 255, 0.75)'}}>
             <View style = {{height: 30, alignSelf: 'center', margin: 5}}>
-              <Text>longitude</Text>
+              <Text>Longitude</Text>
             </View>
             <View style = {{height: 30, alignSelf: 'center', margin: 5}}>
               <Text>{this.state.longitude}</Text>
@@ -581,6 +546,14 @@ export default class TestDrive extends Component {
                 </View>
               </View>
 
+              <View style = {{flexDirection: 'row', alignItems: 'center'}}>
+                <View style = {{height: 30, alignSelf: 'center', margin: 5}}>
+                  <Text>จำนวนการเบรก</Text>
+                </View>
+                <View style = {{height: 30, alignSelf: 'center', margin: 5}}>
+                  <Text>{this.state.result.countBreak} ครั้ง</Text>
+                </View>
+              </View>
             </View>
 
               <TouchableOpacity

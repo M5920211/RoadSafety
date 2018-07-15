@@ -42,6 +42,7 @@ export default class Register extends Component {
             totalDuration: 0,
             totalCountSpeedLimit: 0,
             countAlert: 0,
+            countBreak: 0,
           }).then(() =>{
              this.goBack()
           })

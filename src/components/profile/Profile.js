@@ -28,28 +28,35 @@ class Profile extends Component {
       totalDistance: 0,
       totalDuration: 0,
       totalCountSpeedLimit: 0,
+      countBreak:0,
     }
   }
 
   componentDidMount(){
     const { currentUser } = firebase.auth();
-    const data = firebase.database().ref(`/users/${currentUser.uid}/history`);
+    const data = firebase.database().ref(`/users/${currentUser.uid}`);
     data.on('value', snapshot => {
-      console.log(snapshot);
+      let data = snapshot.val();
+      let items = Object.values(data);
+      this.setState({
+        name: items[0].firstName + ' ' + items[0].lastName,
+        email: items[0].email,
+        mobile: items[0].mobile,
+      })
     });
 
     const total = firebase.database().ref(`/users/${currentUser.uid}/totalTrip`);
     total.on('value', (snapshot) => {
       let data = snapshot.val();
       let items = Object.values(data);
-      console.log(items);
       this.setState({
-        countTrip: items[2],
         avgTotalSpeed: items[0],
-        totalDistance: items[4],
-        totalDuration: items[5],
-        totalCountSpeedLimit: items[3],
-        countAlert: items[1]
+        countAlert: items[1],
+        countBreak: items[2],
+        countTrip: items[3],
+        totalCountSpeedLimit: items[4],
+        totalDistance: items[5],
+        totalDuration: items[6],
       })
     });
 
@@ -80,7 +87,7 @@ class Profile extends Component {
         </Header>
         <Content>
           <View style = {{flexDirection: 'column', padding: 10,}}>
-            <View style = {{flexDirection: 'row', height: 50, margin: 3, alignItems: 'center'}}>
+            <View style = {{flexDirection: 'row', height: 50, margin: 2, alignItems: 'center'}}>
               <View style = {{padding: 10, width: '20%'}}>
                 <Text>Name</Text>
               </View>
@@ -88,7 +95,7 @@ class Profile extends Component {
                 <Text>{this.state.name}</Text>
               </View>
             </View>
-            <View style = {{flexDirection: 'row', height: 50, margin: 3, alignItems: 'center'}}>
+            <View style = {{flexDirection: 'row', height: 50, margin: 2, alignItems: 'center'}}>
               <View style = {{padding: 10, width: '20%'}}>
                 <Text>E-mail</Text>
               </View>
@@ -96,7 +103,7 @@ class Profile extends Component {
                 <Text>{this.state.email}</Text>
               </View>
             </View>
-            <View style = {{flexDirection: 'row', height: 50, margin: 3, alignItems: 'center'}}>
+            <View style = {{flexDirection: 'row', height: 50, margin: 2, alignItems: 'center'}}>
               <View style = {{padding: 10, width: '20%'}}>
                 <Text>Mobile</Text>
               </View>
@@ -109,50 +116,59 @@ class Profile extends Component {
             </TouchableOpacity>
           </View>
 
-          <View style = {{marginHorizontal: 10, padding: 10, borderRadius: 10, backgroundColor: '#C1E0F1'}}>
+          <View style = {{marginHorizontal: 10, paddingHorizontal: 20, paddingTop: 5, borderRadius: 10, backgroundColor: '#C1E0F1'}}>
 
             <View style = {{flexDirection: 'row', alignItems: 'center'}}>
-              <View style = {{height: 30, alignSelf: 'center', margin: 3}}>
+              <View style = {{height: 30, alignSelf: 'center', margin: 2}}>
                 <Text>จำนวนการทดสอบทั้งหมด</Text>
               </View>
-              <View style = {{height: 30, alignSelf: 'center', margin: 3}}>
+              <View style = {{height: 30, alignSelf: 'center', margin: 2}}>
                 <Text>{this.state.countTrip} ครั้ง</Text>
               </View>
             </View>
 
             <View style = {{flexDirection: 'row', alignItems: 'center'}}>
-              <View style = {{height: 30, alignSelf: 'center', margin: 3}}>
+              <View style = {{height: 30, alignSelf: 'center', margin: 2}}>
                 <Text>ความเร็วเฉลี่ย</Text>
               </View>
-              <View style = {{height: 30, alignSelf: 'center', margin: 3}}>
+              <View style = {{height: 30, alignSelf: 'center', margin: 2}}>
                 <Text>{this.state.avgTotalSpeed} km/hr.</Text>
               </View>
             </View>
 
             <View style = {{flexDirection: 'row', alignItems: 'center'}}>
-              <View style = {{height: 30, alignSelf: 'center', margin: 3}}>
+              <View style = {{height: 30, alignSelf: 'center', margin: 2}}>
                 <Text>ระยะทางเฉลี่ย</Text>
               </View>
-              <View style = {{height: 30, alignSelf: 'center', margin: 3}}>
+              <View style = {{height: 30, alignSelf: 'center', margin: 2}}>
                 <Text>{this.state.totalDistance} km.</Text>
               </View>
             </View>
 
             <View style = {{flexDirection: 'row', alignItems: 'center'}}>
-              <View style = {{height: 30, alignSelf: 'center', margin: 3}}>
+              <View style = {{height: 30, alignSelf: 'center', margin: 2}}>
                 <Text>เวลาเฉลี่ย</Text>
               </View>
-              <View style = {{height: 30, alignSelf: 'center', margin: 3}}>
+              <View style = {{height: 30, alignSelf: 'center', margin: 2}}>
                 <Text>{this.state.totalDuration} hr.</Text>
               </View>
             </View>
 
             <View style = {{flexDirection: 'row', alignItems: 'center'}}>
-              <View style = {{height: 30, alignSelf: 'center', margin: 5}}>
+              <View style = {{height: 30, alignSelf: 'center', margin: 2}}>
                 <Text>จำนวนการเตือน</Text>
               </View>
-              <View style = {{height: 30, alignSelf: 'center', margin: 5}}>
+              <View style = {{height: 30, alignSelf: 'center', margin: 2}}>
                 <Text>{this.state.countAlert} ครั้ง</Text>
+              </View>
+            </View>
+
+            <View style = {{flexDirection: 'row', alignItems: 'center'}}>
+              <View style = {{height: 30, alignSelf: 'center', margin: 2}}>
+                <Text>จำนวนการเบรก</Text>
+              </View>
+              <View style = {{height: 30, alignSelf: 'center', margin: 2}}>
+                <Text>{this.state.countBreak} ครั้ง</Text>
               </View>
             </View>
 

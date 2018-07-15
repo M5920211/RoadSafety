@@ -39,7 +39,6 @@ class Login extends Component {
               .then((data) => {
                 let accessToken = data.accessToken
                 const credential = firebase.auth.FacebookAuthProvider.credential(data.accessToken);
-                console.log(credential);
                 firebase.auth().signInWithCredential(credential)
                   .then(() => {
                     const { currentUser } = firebase.auth();
@@ -83,6 +82,7 @@ class Login extends Component {
                       totalDuration: 0,
                       totalCountSpeedLimit: 0,
                       countAlert: 0,
+                      countBreak: 0,
                     }).then(() =>{
                        this.goMenu.bind(this);
                     })
@@ -173,14 +173,6 @@ class Login extends Component {
          <Text style = {{color: '#ffffff', fontSize: 16}}> Login </Text>
         </View>
        </TouchableOpacity>
-       <View style = {{flexDirection: 'row', marginTop: 1 }}>
-        <Text style = {{fontFamily: 'SukhumvitSet-Text',}}> Forget your password?</Text>
-       <TouchableOpacity activeOpacity={0.7} >
-        <View>
-         <Text style = {{fontWeight: 'bold', fontFamily: 'SukhumvitSet-Text',}}> Click here</Text>
-        </View>
-       </TouchableOpacity>
-      </View>
       <View style = {{flexDirection: 'row', marginTop: 20 }}>
        <Text style = {{fontSize: 16, fontFamily: 'SukhumvitSet-Text',}}> Do not have ac account yet?</Text>
       <TouchableOpacity activeOpacity={0.7} onPress={ () => Actions.register()}>

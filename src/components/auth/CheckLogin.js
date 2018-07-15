@@ -22,9 +22,7 @@ class CheckLogin extends Component {
     firebase.initializeApp(config);
     firebase.auth().onAuthStateChanged((user) => {
         if (user) {
-          console.log('true ' + user);
           const { currentUser } = firebase.auth();
-          console.log(currentUser);
           try {
            AsyncStorage.setItem('uid:key', currentUser.uid);
            Actions.tabbar({type: 'reset'});

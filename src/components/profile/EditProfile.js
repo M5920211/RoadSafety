@@ -31,17 +31,17 @@ class EditProfile extends Component {
 
   componentDidMount(){
     const { currentUser } = firebase.auth();
-    const data = firebase.database().ref(`/users/${currentUser.uid}/history`);
+    const data = firebase.database().ref(`/users/${currentUser.uid}`);
     data.on('value', snapshot => {
-      snapshot.forEach((child) => {
-        this.setState({
-          firstName: child.val().firstName == 'null' ? null : child.val().firstName,
-          lastName: child.val().lastName == 'null' ? null : child.val().lastName,
-          email: child.val().email == 'null' ? null : child.val().email,
-          mobile: child.val().mobile == 'null' ? null : child.val().mobile,
-          question: child.val().question,
-        })
-      });
+      let data = snapshot.val();
+      let items = Object.values(data);
+      this.setState({
+        firstName: items[0].firstName == 'null' ? 'null' : items[0].firstName,
+        lastName: items[0].lastName == 'null' ? 'null' : items[0].lastName,
+        email: items[0].email == 'null' ? 'null' : items[0].email,
+        mobile: items[0].mobile == 'null' ? 'null' : items[0].mobile,
+        question: items[0].question,
+      })
     });
   }
 
